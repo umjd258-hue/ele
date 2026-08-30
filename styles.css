@@ -1,0 +1,323 @@
+:root {
+  color-scheme: light;
+  font-family: system-ui, -apple-system, "Hiragino Sans", "Yu Gothic", sans-serif;
+  background: #f8d85a;
+  color: #202020;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+button {
+  font: inherit;
+}
+
+.app-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(112px, 22%);
+  gap: clamp(10px, 2vw, 24px);
+  width: 100%;
+  height: 100dvh;
+  padding: clamp(12px, 2.5vw, 32px);
+  background: #f8d85a;
+}
+
+.elevator {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-width: 0;
+  min-height: 0;
+  padding: clamp(10px, 1.8vw, 22px);
+  border: clamp(5px, 0.8vw, 10px) solid #f29e38;
+  border-radius: clamp(18px, 3vw, 36px);
+  background: #ffe990;
+}
+
+.floor-display {
+  justify-self: center;
+  min-width: 3.4em;
+  margin-bottom: clamp(8px, 1.4vh, 18px);
+  padding: 0.15em 0.55em;
+  border-radius: 0.28em;
+  background: #1d1d1d;
+  color: #ff9d21;
+  font-size: clamp(30px, 5vw, 64px);
+  font-weight: 800;
+  line-height: 1.25;
+  text-align: center;
+}
+
+.door-frame {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 0;
+  overflow: hidden;
+  border: clamp(7px, 1vw, 14px) solid #555b63;
+  border-radius: clamp(8px, 1.4vw, 18px) clamp(8px, 1.4vw, 18px) 0 0;
+  background: #31363c;
+}
+
+.door-scene {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #31363c;
+}
+
+.scene-background {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.scene-target {
+  position: absolute;
+  z-index: 1;
+  bottom: 4%;
+  width: min(34%, 260px);
+  max-height: 38%;
+  object-fit: contain;
+}
+
+.scene-target.is-hinting {
+  animation: target-hint-bounce 0.4s ease-in-out;
+}
+
+@keyframes target-hint-bounce {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+
+  50% {
+    translate: 0 -20px;
+  }
+}
+
+.scene-target.is-tap-reacting {
+  animation: target-tap-reaction 1s ease-in-out;
+}
+
+@keyframes target-tap-reaction {
+  0%,
+  100% {
+    translate: 0 0;
+    scale: 1;
+  }
+
+  50% {
+    translate: 0 -20px;
+    scale: 1.08;
+  }
+}
+
+.door-scene[data-target-position="left-bottom"] .scene-target {
+  left: 5%;
+}
+
+.door-scene[data-target-position="center"] .scene-target {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.door-scene[data-target-position="right-bottom"] .scene-target {
+  right: 5%;
+}
+
+.door {
+  position: relative;
+  z-index: 2;
+  min-width: 0;
+  background: #cfd6db;
+  box-shadow: inset 0 0 0 2px #aeb7bd;
+  transition: transform 1.5s;
+}
+
+.door-left {
+  border-right: 2px solid #858e95;
+}
+
+.door-right {
+  border-left: 2px solid #858e95;
+}
+
+.door-frame[data-door-state="opening"] .door-left,
+.door-frame[data-door-state="open"] .door-left {
+  transform: translateX(-100%);
+}
+
+.door-frame[data-door-state="opening"] .door-right,
+.door-frame[data-door-state="open"] .door-right {
+  transform: translateX(100%);
+}
+
+.control-panel {
+  display: grid;
+  grid-template-rows: minmax(108px, 24%) minmax(0, 1fr);
+  gap: clamp(10px, 1.5vh, 18px);
+  min-width: 0;
+  min-height: 0;
+  padding: clamp(10px, 1.6vw, 20px);
+  border: clamp(5px, 0.7vw, 9px) solid #dd7042;
+  border-radius: clamp(16px, 2.5vw, 30px);
+  background: #ff936d;
+}
+
+.view-window {
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+  border: clamp(5px, 0.7vw, 9px) solid #4b565e;
+  border-radius: clamp(12px, 1.8vw, 22px);
+  background: #bde9ff;
+}
+
+.view-window-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: translateY(0);
+}
+
+.view-window-next {
+  visibility: hidden;
+}
+
+.view-window[data-direction="up"] .view-window-next {
+  visibility: visible;
+  transform: translateY(-100%);
+}
+
+.view-window[data-direction="down"] .view-window-next {
+  visibility: visible;
+  transform: translateY(100%);
+}
+
+.view-window.is-sliding .view-window-image {
+  transition: transform var(--floor-movement-duration) linear;
+}
+
+.view-window.is-sliding[data-direction="up"] .view-window-current {
+  transform: translateY(100%);
+}
+
+.view-window.is-sliding[data-direction="down"] .view-window-current {
+  transform: translateY(-100%);
+}
+
+.view-window.is-sliding .view-window-next {
+  transform: translateY(0);
+}
+
+.floor-buttons {
+  display: grid;
+  grid-template-rows: repeat(11, minmax(0, 1fr));
+  justify-items: center;
+  min-height: 0;
+  gap: clamp(3px, 0.65vh, 8px);
+}
+
+.floor-button {
+  aspect-ratio: 1;
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: #292b2f;
+  color: #fff;
+  box-shadow: inset 0 -0.14em 0 #111316;
+  font-size: clamp(11px, 2.15vh, 24px);
+  font-weight: 800;
+  line-height: 1;
+}
+
+.floor-button:disabled {
+  opacity: 1;
+}
+
+.floor-button:not(:disabled):active {
+  transform: translateY(2px) scale(0.97);
+}
+
+.floor-button.is-selected {
+  background: #ff8a22;
+  box-shadow: inset 0 -0.14em 0 #c95d00;
+}
+
+.loading-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 20px;
+  padding: 24px;
+  background: #f8d85a;
+}
+
+.loading-progress {
+  margin: 0;
+  font-size: clamp(24px, 5vw, 52px);
+  font-weight: 800;
+}
+
+.start-button,
+.retry-button {
+  min-width: min(70vw, 360px);
+  padding: 0.55em 1em;
+  border: 0;
+  border-radius: 999px;
+  background: #ff7a45;
+  color: #fff;
+  box-shadow: 0 0.18em 0 #c84b27;
+  font-size: clamp(30px, 6vw, 60px);
+  font-weight: 800;
+}
+
+.speech-audition {
+  position: fixed;
+  z-index: 20;
+  right: 8px;
+  bottom: 8px;
+  max-width: calc(100vw - 16px);
+  padding: 6px 8px;
+  border: 1px solid #6d6d6d;
+  border-radius: 8px;
+  background: rgb(255 255 255 / 90%);
+  color: #202020;
+  font-size: 12px;
+}
+
+.speech-audition summary {
+  cursor: pointer;
+}
+
+.speech-audition-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.speech-audition-actions button {
+  padding: 6px 8px;
+}
+
+[hidden] {
+  display: none !important;
+}

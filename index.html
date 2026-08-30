@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>わくわくエレベーター</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app-shell" id="app" aria-label="わくわくエレベーター" aria-hidden="true">
+    <section class="elevator" aria-label="エレベーター">
+      <output class="floor-display" id="floor-display" aria-label="現在の階">1F</output>
+
+      <div class="door-frame" id="door-frame" data-door-state="closed">
+        <div class="door-scene" id="door-scene" data-target-position="center" aria-hidden="true">
+          <img class="scene-background" id="scene-background" alt="">
+          <img class="scene-target" id="scene-target" alt="">
+        </div>
+        <div class="door door-left" aria-hidden="true"></div>
+        <div class="door door-right" aria-hidden="true"></div>
+      </div>
+    </section>
+
+    <aside class="control-panel" aria-label="操作盤">
+      <div class="view-window" id="view-window" aria-label="外を見る小窓">
+        <img class="view-window-image view-window-current" id="view-window-current" alt="">
+        <img class="view-window-image view-window-next" id="view-window-next" alt="">
+      </div>
+
+      <div class="floor-buttons" id="floor-buttons" aria-label="階ボタン">
+        <button class="floor-button" type="button" data-floor="10" disabled>10F</button>
+        <button class="floor-button" type="button" data-floor="9" disabled>9F</button>
+        <button class="floor-button" type="button" data-floor="8" disabled>8F</button>
+        <button class="floor-button" type="button" data-floor="7" disabled>7F</button>
+        <button class="floor-button" type="button" data-floor="6" disabled>6F</button>
+        <button class="floor-button" type="button" data-floor="5" disabled>5F</button>
+        <button class="floor-button" type="button" data-floor="4" disabled>4F</button>
+        <button class="floor-button" type="button" data-floor="3" disabled>3F</button>
+        <button class="floor-button" type="button" data-floor="2" disabled>2F</button>
+        <button class="floor-button" type="button" data-floor="1" disabled>1F</button>
+        <button class="floor-button" type="button" data-floor="-1" disabled>B1</button>
+      </div>
+    </aside>
+  </main>
+
+  <section class="loading-screen" id="loading-screen" aria-live="polite" aria-label="画像の読み込み">
+    <p class="loading-progress" id="loading-progress">よみこみちゅう… 0%</p>
+    <button class="start-button" id="start-button" type="button" disabled hidden>スタート</button>
+    <button class="retry-button" id="retry-button" type="button" disabled hidden>もういちど</button>
+  </section>
+
+  <details class="speech-audition" id="speech-audition">
+    <summary>音声試聴</summary>
+    <div class="speech-audition-actions">
+      <button type="button" data-speech-id="voice_going_up">Going up.</button>
+      <button type="button" data-speech-id="voice_arrival_1f">First floor.</button>
+    </div>
+  </details>
+
+  <script src="app.js"></script>
+</body>
+</html>
