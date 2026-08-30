@@ -172,6 +172,7 @@ const DOOR_TRANSITION_DURATION_MS = 1500;
 const FLOOR_MOVEMENT_DURATION_MS = 1000;
 const TARGET_HINT_DELAYS_MS = Object.freeze([3000, 4000]);
 const AUTO_CLOSE_DELAY_MS = 5000;
+const SPEECH_COMPLETION_TIMEOUT_MS = 3000;
 
 const SPEECH_SETTINGS = Object.freeze({
   preferredVoiceName: null,
@@ -192,8 +193,7 @@ const appElements = Object.freeze({
   loadingScreen: document.getElementById("loading-screen"),
   loadingProgress: document.getElementById("loading-progress"),
   startButton: document.getElementById("start-button"),
-  retryButton: document.getElementById("retry-button"),
-  speechAudition: document.getElementById("speech-audition")
+  retryButton: document.getElementById("retry-button")
 });
 
 const preloadState = {
@@ -352,26 +352,6 @@ function selectEnglishVoice(voices) {
   return voices.find((voice) => voice.lang.toLowerCase().startsWith("en-")) ?? null;
 }
 
-function speakAnnouncement(audioId, previewText = null) {
-  const text = previewText ?? SPEECH_MESSAGES[audioId];
-  if (!text || !("speechSynthesis" in window) || !("SpeechSynthesisUtterance" in window)) {
-    return false;
-  }
-
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = "en-US";
-
-  const voice = selectEnglishVoice(window.speechSynthesis.getVoices());
-  if (voice !== null) {
-    utterance.voice = voice;
-  }
-
-  utterance.rate = SPEECH_SETTINGS.rate;
-
-  window.speechSynthesis.speak(utterance);
-  return true;
-}
-
 function speakAnnouncementAndWait(audioId) {
   return new Promise((resolve) => {
     const text = SPEECH_MESSAGES[audioId];
@@ -389,9 +369,26 @@ function speakAnnouncementAndWait(audioId) {
       utterance.voice = voice;
     }
 
-    utterance.onend = resolve;
-    utterance.onerror = resolve;
-    window.speechSynthesis.speak(utterance);
+    let isFinished = false;
+    const finishOnce = () => {
+      if (isFinished) {
+        return;
+      }
+
+      isFinished = true;
+      window.clearTimeout(failsafeTimerId);
+      resolve();
+    };
+    const failsafeTimerId = window.setTimeout(finishOnce, SPEECH_COMPLETION_TIMEOUT_MS);
+
+    utterance.onend = finishOnce;
+    utterance.onerror = finishOnce;
+
+    try {
+      window.speechSynthesis.speak(utterance);
+    } catch (error) {
+      finishOnce();
+    }
   });
 }
 
@@ -442,15 +439,6 @@ async function runArrivalSequence(arrivedFloor, direction) {
   await playAudioAssetAndWait(chimeAudioId);
   await speakAnnouncementAndWait(arrivalSpeechId);
   openDoorAtCurrentFloor();
-}
-
-function handleSpeechAuditionClick(event) {
-  const button = event.target.closest("[data-speech-id]");
-  if (!button) {
-    return;
-  }
-
-  speakAnnouncement(button.dataset.speechId, button.dataset.speechPreview ?? null);
 }
 
 function handleSceneTargetClick() {
@@ -701,6 +689,12 @@ function updateProgress(processedCount, hasFailures = false) {
   appElements.loadingProgress.textContent = `よみこみちゅう… ${percent}%`;
 }
 
+function showPreloadErrors() {
+  const failedFilenames = [...preloadState.failedAssets];
+  appElements.loadingProgress.style.whiteSpace = "pre-line";
+  appElements.loadingProgress.textContent = `よみこみエラー\n${failedFilenames.join("\n")}`;
+}
+
 function loadImageOnce(filename) {
   return new Promise((resolve, reject) => {
     const image = new Image();
@@ -764,6 +758,7 @@ async function preloadAssets(filenames) {
   }
 
   setStartAvailability(false);
+  showPreloadErrors();
   appElements.retryButton.disabled = false;
   appElements.retryButton.hidden = false;
 }
@@ -775,7 +770,6 @@ appElements.retryButton.addEventListener("click", () => {
 
 appElements.startButton.addEventListener("click", startGame);
 appElements.floorButtons.addEventListener("click", handleFloorButtonClick);
-appElements.speechAudition.addEventListener("click", handleSpeechAuditionClick);
 appElements.sceneTarget.addEventListener("click", handleSceneTargetClick);
 appElements.sceneTarget.addEventListener("animationend", handleSceneTargetAnimationEnd);
 

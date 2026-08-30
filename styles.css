@@ -290,34 +290,6 @@ button {
   font-weight: 800;
 }
 
-.speech-audition {
-  position: fixed;
-  z-index: 20;
-  right: 8px;
-  bottom: 8px;
-  max-width: calc(100vw - 16px);
-  padding: 6px 8px;
-  border: 1px solid #6d6d6d;
-  border-radius: 8px;
-  background: rgb(255 255 255 / 90%);
-  color: #202020;
-  font-size: 12px;
-}
-
-.speech-audition summary {
-  cursor: pointer;
-}
-
-.speech-audition-actions {
-  display: flex;
-  gap: 6px;
-  margin-top: 6px;
-}
-
-.speech-audition-actions button {
-  padding: 6px 8px;
-}
-
 [hidden] {
   display: none !important;
 }
