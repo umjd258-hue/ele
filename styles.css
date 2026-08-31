@@ -89,6 +89,7 @@ button {
   width: min(34%, 260px);
   max-height: 38%;
   object-fit: contain;
+  touch-action: manipulation;
 }
 
 .scene-target.is-tap-reacting {
