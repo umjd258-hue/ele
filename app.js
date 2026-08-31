@@ -150,17 +150,17 @@ const SPEECH_MESSAGES = Object.freeze({
   voice_going_up: "Going up.",
   voice_going_down: "Going down.",
   voice_door_closing: "The doors are closing.",
-  voice_arrival_b1: "Basement level one.",
-  voice_arrival_1f: "First floor.",
-  voice_arrival_2f: "Second floor.",
-  voice_arrival_3f: "Third floor.",
-  voice_arrival_4f: "Fourth floor.",
-  voice_arrival_5f: "Fifth floor.",
-  voice_arrival_6f: "Sixth floor.",
-  voice_arrival_7f: "Seventh floor.",
-  voice_arrival_8f: "Eighth floor.",
-  voice_arrival_9f: "Ninth floor.",
-  voice_arrival_10f: "Tenth floor."
+  voice_arrival_b1: "Basement level. Parking.",
+  voice_arrival_1f: "First floor. Toys.",
+  voice_arrival_2f: "Second floor. Trains.",
+  voice_arrival_3f: "Third floor. Zoo.",
+  voice_arrival_4f: "Fourth floor. Aquarium.",
+  voice_arrival_5f: "Fifth floor. Working vehicles.",
+  voice_arrival_6f: "Sixth floor. Railroad crossings.",
+  voice_arrival_7f: "Seventh floor. Playground.",
+  voice_arrival_8f: "Eighth floor. Amusement park.",
+  voice_arrival_9f: "Ninth floor. Sky and aircraft.",
+  voice_arrival_10f: "Tenth floor. Weather."
 });
 const AUDIO_ASSET_PATHS = Object.freeze({
   sfx_elevator_arrival_up: "audio/app/sfx_elevator_arrival_up.mp3",
