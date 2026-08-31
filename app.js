@@ -352,6 +352,50 @@ function selectEnglishVoice(voices) {
   return voices.find((voice) => voice.lang.toLowerCase().startsWith("en-")) ?? null;
 }
 
+function unlockSpeechSynthesis() {
+  if (!("speechSynthesis" in window) || !("SpeechSynthesisUtterance" in window)) {
+    return;
+  }
+
+  const utterance = new SpeechSynthesisUtterance(" ");
+  utterance.lang = "en-US";
+  utterance.rate = SPEECH_SETTINGS.rate;
+  utterance.volume = 0;
+
+  const voice = selectEnglishVoice(window.speechSynthesis.getVoices());
+  if (voice !== null) {
+    utterance.voice = voice;
+  }
+
+  try {
+    window.speechSynthesis.speak(utterance);
+  } catch (error) {
+    // 音声合成を利用できない環境でもゲーム開始は妨げない。
+  }
+}
+
+function speakAnnouncement(audioId) {
+  const text = SPEECH_MESSAGES[audioId];
+  if (!text || !("speechSynthesis" in window) || !("SpeechSynthesisUtterance" in window)) {
+    return;
+  }
+
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = "en-US";
+  utterance.rate = SPEECH_SETTINGS.rate;
+
+  const voice = selectEnglishVoice(window.speechSynthesis.getVoices());
+  if (voice !== null) {
+    utterance.voice = voice;
+  }
+
+  try {
+    window.speechSynthesis.speak(utterance);
+  } catch (error) {
+    // 移動処理は音声合成の成否を待たずに継続する。
+  }
+}
+
 function speakAnnouncementAndWait(audioId) {
   return new Promise((resolve) => {
     const text = SPEECH_MESSAGES[audioId];
@@ -607,6 +651,7 @@ function startMoving() {
   gameState.movementDirection = destinationIndex > currentIndex ? "up" : "down";
   gameState.moving = true;
   setFloorButtonsEnabled(false);
+  speakAnnouncement(gameState.movementDirection === "up" ? "voice_going_up" : "voice_going_down");
   scheduleNextFloorStep();
 }
 
@@ -675,6 +720,7 @@ function startGame() {
     return;
   }
 
+  unlockSpeechSynthesis();
   resetGameState();
   renderInitialGameState();
   appElements.loadingScreen.hidden = true;
