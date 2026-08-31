@@ -166,11 +166,18 @@ const AUDIO_ASSET_PATHS = Object.freeze({
   sfx_elevator_arrival_up: "audio/app/sfx_elevator_arrival_up.mp3",
   sfx_elevator_arrival_down: "audio/app/sfx_elevator_arrival_down.mp3"
 });
+const PYOKO_AUDIO_ASSETS = Object.freeze([
+  "audio/app/sfx_pyoko_01.wav",
+  "audio/app/sfx_pyoko_02.wav",
+  "audio/app/sfx_pyoko_03.wav",
+  "audio/app/sfx_pyoko_04.wav",
+  "audio/app/sfx_pyoko_05.wav"
+]);
 const AVAILABLE_AUDIO_ASSET_IDS = Object.freeze([]);
 const MAX_AUTOMATIC_RETRIES = 2;
-const DOOR_TRANSITION_DURATION_MS = 1500;
+const DOOR_OPEN_DURATION_MS = 1500;
+const DOOR_CLOSE_DURATION_MS = 2000;
 const FLOOR_MOVEMENT_DURATION_MS = 1000;
-const TARGET_HINT_DELAYS_MS = Object.freeze([3000, 4000]);
 const AUTO_CLOSE_DELAY_MS = 5000;
 const SPEECH_COMPLETION_TIMEOUT_MS = 3000;
 
@@ -218,23 +225,13 @@ const sceneShuffleState = {
 };
 
 const sceneInteractionState = {
-  tapCount: 0,
-  isAnimating: false,
   isActive: false
 };
 
 let movementTimerId = null;
-let targetHintTimerIds = [];
 let autoCloseTimerId = null;
-
-function clearTargetHintTimers() {
-  for (const timerId of targetHintTimerIds) {
-    window.clearTimeout(timerId);
-  }
-
-  targetHintTimerIds = [];
-  appElements.sceneTarget.classList.remove("is-hinting");
-}
+let lastPyokoAudioIndex = -1;
+const activePyokoAudios = new Set();
 
 function clearAutoCloseTimer() {
   if (autoCloseTimerId !== null) {
@@ -244,34 +241,17 @@ function clearAutoCloseTimer() {
 }
 
 function clearSceneTimers() {
-  clearTargetHintTimers();
   clearAutoCloseTimer();
 }
 
 function resetSceneInteraction(isActive = false) {
-  sceneInteractionState.tapCount = 0;
-  sceneInteractionState.isAnimating = false;
   sceneInteractionState.isActive = isActive;
   appElements.sceneTarget.classList.remove("is-tap-reacting");
 }
 
 function deactivateSceneInteraction() {
   sceneInteractionState.isActive = false;
-  sceneInteractionState.isAnimating = false;
   appElements.sceneTarget.classList.remove("is-tap-reacting");
-}
-
-function playTargetHint() {
-  appElements.sceneTarget.classList.remove("is-hinting");
-  void appElements.sceneTarget.offsetWidth;
-  appElements.sceneTarget.classList.add("is-hinting");
-}
-
-function scheduleTargetHints() {
-  clearTargetHintTimers();
-  targetHintTimerIds = TARGET_HINT_DELAYS_MS.map((delay) => window.setTimeout(() => {
-    playTargetHint();
-  }, delay));
 }
 
 function scheduleAutomaticDoorClose() {
@@ -312,9 +292,9 @@ function drawTargetPosition() {
   return sceneShuffleState.positionBag.pop();
 }
 
-function showSceneForCurrentFloor() {
+function prepareSceneForCurrentFloor() {
   clearSceneTimers();
-  resetSceneInteraction(true);
+  resetSceneInteraction(false);
   const floorAssets = FLOOR_SCENE_ASSETS[gameState.currentFloor];
   const background = drawFloorAsset(
     sceneShuffleState.backgroundBags,
@@ -332,7 +312,10 @@ function showSceneForCurrentFloor() {
   appElements.sceneTarget.src = target;
   appElements.doorScene.dataset.targetPosition = targetPosition;
   appElements.doorScene.setAttribute("aria-hidden", "false");
-  scheduleTargetHints();
+}
+
+function activatePreparedScene() {
+  resetSceneInteraction(true);
   scheduleAutomaticDoorClose();
 }
 
@@ -441,7 +424,7 @@ async function startAutomaticDoorClosing() {
     return;
   }
 
-  clearTargetHintTimers();
+  clearAutoCloseTimer();
   deactivateSceneInteraction();
   setFloorButtonsEnabled(false);
   await speakAnnouncementAndWait("voice_door_closing");
@@ -457,7 +440,7 @@ async function startAutomaticDoorClosing() {
     gameState.door = "closed";
     appElements.doorFrame.dataset.doorState = gameState.door;
     setFloorButtonsEnabled(true);
-  }, DOOR_TRANSITION_DURATION_MS);
+  }, DOOR_CLOSE_DURATION_MS);
 }
 
 function playAudioAssetAndWait(audioId) {
@@ -485,29 +468,35 @@ async function runArrivalSequence(arrivedFloor, direction) {
   openDoorAtCurrentFloor();
 }
 
+function playPyokoSound() {
+  let audioIndex = Math.floor(Math.random() * PYOKO_AUDIO_ASSETS.length);
+  if (audioIndex === lastPyokoAudioIndex) {
+    audioIndex = (audioIndex + 1 + Math.floor(Math.random() * (PYOKO_AUDIO_ASSETS.length - 1)))
+      % PYOKO_AUDIO_ASSETS.length;
+  }
+
+  lastPyokoAudioIndex = audioIndex;
+  const audio = new Audio(PYOKO_AUDIO_ASSETS[audioIndex]);
+  const releaseAudio = () => activePyokoAudios.delete(audio);
+  activePyokoAudios.add(audio);
+  audio.addEventListener("ended", releaseAudio, { once: true });
+  audio.addEventListener("error", releaseAudio, { once: true });
+  audio.play().catch(releaseAudio);
+}
+
 function handleSceneTargetClick() {
   if (
     gameState.door !== "open"
     || !sceneInteractionState.isActive
-    || sceneInteractionState.isAnimating
-    || sceneInteractionState.tapCount >= 3
   ) {
     return;
   }
 
-  sceneInteractionState.tapCount += 1;
-  sceneInteractionState.isAnimating = true;
-  clearTargetHintTimers();
-  appElements.sceneTarget.classList.add("is-tap-reacting");
-}
-
-function handleSceneTargetAnimationEnd(event) {
-  if (event.animationName !== "target-tap-reaction") {
-    return;
-  }
-
+  scheduleAutomaticDoorClose();
+  playPyokoSound();
   appElements.sceneTarget.classList.remove("is-tap-reacting");
-  sceneInteractionState.isAnimating = false;
+  void appElements.sceneTarget.offsetWidth;
+  appElements.sceneTarget.classList.add("is-tap-reacting");
 }
 
 function setStartAvailability(isAvailable) {
@@ -588,14 +577,15 @@ function openDoorAtCurrentFloor() {
     return;
   }
 
+  prepareSceneForCurrentFloor();
   gameState.door = "opening";
   appElements.doorFrame.dataset.doorState = gameState.door;
 
   window.setTimeout(() => {
     gameState.door = "open";
     appElements.doorFrame.dataset.doorState = gameState.door;
-    showSceneForCurrentFloor();
-  }, DOOR_TRANSITION_DURATION_MS);
+    activatePreparedScene();
+  }, DOOR_OPEN_DURATION_MS);
 }
 
 function isDoorTransitioning() {
@@ -666,7 +656,7 @@ function closeDoorAndStartMoving() {
     gameState.door = "closed";
     appElements.doorFrame.dataset.doorState = gameState.door;
     startMoving();
-  }, DOOR_TRANSITION_DURATION_MS);
+  }, DOOR_CLOSE_DURATION_MS);
 }
 
 function beginDeparture() {
@@ -817,7 +807,6 @@ appElements.retryButton.addEventListener("click", () => {
 appElements.startButton.addEventListener("click", startGame);
 appElements.floorButtons.addEventListener("click", handleFloorButtonClick);
 appElements.sceneTarget.addEventListener("click", handleSceneTargetClick);
-appElements.sceneTarget.addEventListener("animationend", handleSceneTargetAnimationEnd);
 
 window.addEventListener("DOMContentLoaded", () => {
   resetGameState();
